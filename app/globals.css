@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  --bottom-nav-offset: calc(3.75rem + env(safe-area-inset-bottom));
+  --detail-panel-height: 33dvh;
+  --detail-photo-height: calc(var(--detail-panel-height) * 0.33);
+  --steppe-deep: #1b4332;
+  --steppe-mid: #2d6a4f;
+  --steppe-light: #52b788;
+  --sand: #f4efe6;
+  --sand-dark: #e0d4c4;
+  --sky: #d8ead3;
+}
+
+@theme inline {
+  --color-steppe-deep: var(--steppe-deep);
+  --color-steppe-mid: var(--steppe-mid);
+  --color-steppe-light: var(--steppe-light);
+  --color-sand: var(--sand);
+  --color-sand-dark: var(--sand-dark);
+  --color-sky: var(--sky);
+  --font-sans: var(--font-geist-sans);
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--sand);
+  color: var(--steppe-deep);
+}
+
+.leaflet-container {
+  font-family: inherit;
+  background: #e8efe6;
+}
+
+.user-location-marker {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.user-location-ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--steppe-light);
+  opacity: 0.45;
+  animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.user-location-dot {
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  background: var(--steppe-mid);
+  box-shadow: 0 1px 4px rgba(27, 67, 50, 0.35);
+}
+
+.trash-zone-marker {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  border: 2px solid #fff;
+  background: #9ca3af;
+  box-shadow: 0 1px 6px rgba(75, 85, 99, 0.35);
+}
+
+/* Близость: 0 — рядом (красный) → 3 — далеко (серый) */
+.trash-zone-marker--tier-0 {
+  background: #dc2626;
+  box-shadow: 0 1px 8px rgba(220, 38, 38, 0.55);
+}
+
+.trash-zone-marker--tier-1 {
+  background: #ea580c;
+  box-shadow: 0 1px 7px rgba(234, 88, 12, 0.5);
+}
+
+.trash-zone-marker--tier-2 {
+  background: #f59e0b;
+  box-shadow: 0 1px 6px rgba(245, 158, 11, 0.45);
+}
+
+.trash-zone-marker--tier-3 {
+  background: #9ca3af;
+  box-shadow: 0 1px 6px rgba(107, 114, 128, 0.35);
+}
+
+.pick-location-marker {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 3px solid #fff;
+  background: var(--steppe-mid);
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.4);
+}
+
+@keyframes ping {
+  75%,
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

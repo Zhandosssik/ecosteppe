@@ -59,5 +59,8 @@ next-env.d.ts
 # cursor (optional local state)
 .cursor/
 
+# local assets / screenshots (not part of the app)
+/assets/
+
 # OS
 *.log
