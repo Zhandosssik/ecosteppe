@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isPublicZoneReport } from "@/lib/reports/is-cleanup-proof";
 import { withDistanceSorted } from "@/lib/reports/sort-by-distance";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
@@ -45,9 +46,10 @@ export async function GET(request: Request) {
   const { data, error } = await supabase
     .from("reports")
     .select(
-      "id, user_id, lat, lng, photo_url, ai_verified, ai_confidence, status, notes, created_at",
+      "id, user_id, lat, lng, photo_url, ai_verified, ai_confidence, status, notes, created_at, cleaned_at, cleanup_photo_url",
     )
-    .eq("status", "verified");
+    .eq("status", "verified")
+    .is("cleaned_at", null);
 
   if (error) {
     console.error("[reports/nearby]", error);
@@ -71,7 +73,11 @@ export async function GET(request: Request) {
     return publicError("Ошибка загрузки заявок", 500, error.message);
   }
 
-  const reports = withDistanceSorted(data ?? [], lat, lng);
+  const reports = withDistanceSorted(
+    (data ?? []).filter(isPublicZoneReport),
+    lat,
+    lng,
+  );
 
   return NextResponse.json({ reports });
 }

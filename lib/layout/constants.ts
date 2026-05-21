@@ -5,6 +5,15 @@ export const BOTTOM_NAV_CLASS =
 export const BOTTOM_NAV_OFFSET =
   "calc(3.75rem + env(safe-area-inset-bottom))";
 
+/** Зазор FAB «Новая заявка» над центральной вкладкой навигации */
+export const REPORTS_FAB_ABOVE_NAV = "2.25rem";
+
+/** Нижний край FAB чуть выше кнопки «Заявки» в навбаре */
+export const REPORTS_FAB_BOTTOM_OFFSET = `calc(${BOTTOM_NAV_OFFSET} + ${REPORTS_FAB_ABOVE_NAV})`;
+
+/** Отступ списка заявок под FAB */
+export const REPORTS_LIST_SCROLL_PADDING = `calc(${REPORTS_FAB_BOTTOM_OFFSET} + 4.25rem)`;
+
 /** Список зон: карта 52% / панель 48% */
 export const MAP_LIST_SPLIT_HEIGHT = "52%";
 export const LIST_PANEL_SPLIT_HEIGHT = "48%";

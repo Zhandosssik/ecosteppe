@@ -33,7 +33,14 @@ function mapGeoError(error: GeolocationPositionError): GeoResult {
   return { ok: false, code, message: ERROR_MESSAGES[code] };
 }
 
-export function getUserPosition(): Promise<GeoResult> {
+export type GeoOptions = {
+  /** Точный GPS — дольше; для кнопки «где я» */
+  highAccuracy?: boolean;
+  /** Кэш координат в мс (быстрее повторные запросы) */
+  maximumAge?: number;
+};
+
+export function getUserPosition(options?: GeoOptions): Promise<GeoResult> {
   if (typeof navigator === "undefined" || !navigator.geolocation) {
     return Promise.resolve({
       ok: false,
@@ -55,7 +62,11 @@ export function getUserPosition(): Promise<GeoResult> {
         });
       },
       (error) => resolve(mapGeoError(error)),
-      { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 },
+      {
+        enableHighAccuracy: options?.highAccuracy ?? false,
+        timeout: 12_000,
+        maximumAge: options?.maximumAge ?? 60_000,
+      },
     );
   });
 }

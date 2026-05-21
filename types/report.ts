@@ -11,8 +11,19 @@ export type ReportRow = {
   status: ReportStatus;
   notes: string | null;
   created_at: string;
+  /** Когда зона отмечена убранной; null — активная заявка */
+  cleaned_at?: string | null;
+  /** Фото места после уборки */
+  cleanup_photo_url?: string | null;
 };
+
+export type ReportsListScope = "active" | "completed";
 
 export type NearbyReport = ReportRow & {
   distance_km: number;
+};
+
+/** Заявка в списке; расстояние — если передана геолокация */
+export type ReportListItem = ReportRow & {
+  distance_km?: number;
 };

@@ -13,7 +13,7 @@ import { useNearbyReports } from "@/hooks/use-nearby-reports";
 import { fetchRouteToReport } from "@/lib/map/fetch-route";
 import type { PanelMode, PanelSnap } from "@/lib/layout/panel-snaps";
 import type { RouteBuildState } from "@/types/map-route";
-import type { NearbyReport } from "@/types/report";
+import type { NearbyReport, ReportListItem } from "@/types/report";
 
 export function HomeScreen() {
   const [panelSnap, setPanelSnap] = useState<PanelSnap>("split");
@@ -22,7 +22,7 @@ export function HomeScreen() {
     null,
   );
   const [flyTarget, setFlyTarget] = useState<MapFlyTarget | null>(null);
-  const [selectedReport, setSelectedReport] = useState<NearbyReport | null>(
+  const [selectedReport, setSelectedReport] = useState<ReportListItem | null>(
     null,
   );
   const [routeState, setRouteState] = useState<RouteBuildState>({
@@ -61,7 +61,7 @@ export function HomeScreen() {
     });
   }, [selectedReport?.id]);
 
-  const handleSelectReport = useCallback((report: NearbyReport) => {
+  const handleSelectReport = useCallback((report: ReportListItem) => {
     setFlyTarget({
       lat: report.lat,
       lng: report.lng,
@@ -178,6 +178,11 @@ export function HomeScreen() {
         userPosition={userPosition}
         onBuildRoute={handleBuildRoute}
         onClearRoute={handleClearRoute}
+        onCleanupSubmitted={() => setReportsRefreshKey((k) => k + 1)}
+        onDismissedNatural={() => {
+          setSelectedReport(null);
+          setReportsRefreshKey((k) => k + 1);
+        }}
       />
 
       <div className="absolute inset-x-0 bottom-0 z-30">

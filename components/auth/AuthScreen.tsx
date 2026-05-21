@@ -3,10 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { mapAuthError } from "@/lib/auth/errors";
-import {
-  passwordsMatch,
-  validatePassword,
-} from "@/lib/auth/password";
+import { passwordsMatch, validatePassword } from "@/lib/auth/password";
 import {
   isValidOtpCode,
   OTP_MAX_LENGTH,
@@ -16,13 +13,15 @@ import { getAuthRedirectUrl } from "@/lib/auth/redirect-url";
 import { resendSignupVerification } from "@/lib/auth/resend-signup-code";
 import { AuthField } from "@/components/auth/AuthField";
 import { useAuth, type AuthView } from "@/components/auth/AuthProvider";
-
-const btnPrimary =
-  "flex min-h-11 w-full items-center justify-center rounded-xl bg-steppe-deep px-4 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-50";
-const btnSecondary =
-  "flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-sand-dark bg-white px-4 text-sm font-medium text-steppe-deep transition active:scale-[0.98] disabled:opacity-50";
+import { useLanguage } from "@/lib/i18n/context";
+import type { Locale } from "@/lib/i18n/translations";
 
 const RESEND_COOLDOWN_SEC = 60;
+
+const LOCALE_OPTIONS: { value: Locale; label: string }[] = [
+  { value: "ru", label: "Рус" },
+  { value: "kk", label: "Қаз" },
+];
 
 export function AuthScreen() {
   const {
@@ -34,6 +33,7 @@ export function AuthScreen() {
     setPendingPassword,
     refreshSession,
   } = useAuth();
+  const { t, locale, setLocale } = useLanguage();
 
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
@@ -49,9 +49,7 @@ export function AuthScreen() {
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
-    if (pendingEmail) {
-      setEmail(pendingEmail);
-    }
+    if (pendingEmail) setEmail(pendingEmail);
   }, [pendingEmail]);
 
   useEffect(() => {
@@ -86,9 +84,7 @@ export function AuthScreen() {
     setError(null);
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: {
-        redirectTo: getAuthRedirectUrl("/auth/callback"),
-      },
+      options: { redirectTo: getAuthRedirectUrl("/auth/callback") },
     });
     if (oauthError) {
       setError(mapAuthError(oauthError.message));
@@ -114,7 +110,7 @@ export function AuthScreen() {
         if (msg.includes("email not confirmed")) {
           setPendingEmail(email.trim());
           setPendingPassword(password);
-          setInfo("Подтвердите email — введите код из письма");
+          setInfo(t.auth.codeSentTo(email.trim()));
           switchView("verify");
           setBusy(false);
           return;
@@ -124,12 +120,10 @@ export function AuthScreen() {
         return;
       }
 
-      if (data.session) {
-        await refreshSession();
-      }
+      if (data.session) await refreshSession();
       setBusy(false);
     },
-    [supabase, email, password, refreshSession, setPendingEmail, setPendingPassword, switchView],
+    [supabase, email, password, refreshSession, setPendingEmail, setPendingPassword, switchView, t],
   );
 
   const handleRegister = useCallback(
@@ -155,9 +149,7 @@ export function AuthScreen() {
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: trimmedEmail,
         password,
-        options: {
-          emailRedirectTo: getAuthRedirectUrl("/auth/callback"),
-        },
+        options: { emailRedirectTo: getAuthRedirectUrl("/auth/callback") },
       });
 
       if (signUpError) {
@@ -179,7 +171,6 @@ export function AuthScreen() {
             switchView("verify");
           } else {
             setError(mapAuthError(resent.error));
-            setInfo("Email уже зарегистрирован. Войдите или введите код, если он был в письме.");
             switchView("verify");
           }
           return;
@@ -197,20 +188,11 @@ export function AuthScreen() {
 
       setPendingEmail(trimmedEmail);
       setPendingPassword(password);
-      setInfo("На ваш email отправлен код подтверждения");
+      setInfo(t.auth.codeSentTo(trimmedEmail));
       switchView("verify");
       setBusy(false);
     },
-    [
-      supabase,
-      email,
-      password,
-      confirmPassword,
-      refreshSession,
-      setPendingEmail,
-      setPendingPassword,
-      switchView,
-    ],
+    [supabase, email, password, confirmPassword, refreshSession, setPendingEmail, setPendingPassword, switchView, t],
   );
 
   const handleVerify = useCallback(
@@ -256,12 +238,10 @@ export function AuthScreen() {
   );
 
   const handleResendCode = useCallback(async () => {
-    if (!supabase) return;
-    if (resendCooldown > 0) return;
-
+    if (!supabase || resendCooldown > 0) return;
     const targetEmail = (pendingEmail || email).trim();
     if (!targetEmail) {
-      setError("Укажите email");
+      setError(t.auth.email);
       return;
     }
 
@@ -276,23 +256,13 @@ export function AuthScreen() {
     );
 
     setBusy(false);
-
     if (!result.ok) {
       setError(mapAuthError(result.error));
       return;
     }
-
     setInfo(result.hint);
     setResendCooldown(RESEND_COOLDOWN_SEC);
-  }, [
-    supabase,
-    pendingEmail,
-    email,
-    pendingPassword,
-    password,
-    resendCooldown,
-    refreshSession,
-  ]);
+  }, [supabase, pendingEmail, email, pendingPassword, password, resendCooldown, t]);
 
   const handleForgot = useCallback(
     async (e: React.FormEvent) => {
@@ -304,9 +274,7 @@ export function AuthScreen() {
       const trimmedEmail = email.trim();
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(
         trimmedEmail,
-        {
-          redirectTo: getAuthRedirectUrl("/auth/callback?next=/profile"),
-        },
+        { redirectTo: getAuthRedirectUrl("/auth/callback?next=/profile") },
       );
 
       if (resetError) {
@@ -316,11 +284,11 @@ export function AuthScreen() {
       }
 
       setPendingEmail(trimmedEmail);
-      setInfo("Код для сброса пароля отправлен на email");
+      setInfo(t.auth.codeSentTo(trimmedEmail));
       switchView("reset");
       setBusy(false);
     },
-    [supabase, email, setPendingEmail, switchView],
+    [supabase, email, setPendingEmail, switchView, t],
   );
 
   const handleResetPassword = useCallback(
@@ -370,63 +338,78 @@ export function AuthScreen() {
       }
 
       await refreshSession();
-      setInfo("Пароль обновлён");
       setBusy(false);
     },
-    [
-      supabase,
-      newPassword,
-      confirmNewPassword,
-      otp,
-      pendingEmail,
-      email,
-      refreshSession,
-    ],
+    [supabase, newPassword, confirmNewPassword, otp, pendingEmail, email, refreshSession],
   );
 
   const titles: Record<AuthView, string> = {
-    login: "Вход",
-    register: "Регистрация",
-    verify: "Подтверждение email",
-    forgot: "Восстановление пароля",
-    reset: "Новый пароль",
+    login: t.auth.login,
+    register: t.auth.register,
+    verify: t.auth.verify,
+    forgot: t.auth.forgot,
+    reset: t.auth.reset,
+  };
+
+  const subtitles: Record<AuthView, string> = {
+    login: t.auth.loginSubtitle,
+    register: t.auth.registerSubtitle,
+    verify: t.auth.codeSentTo(pendingEmail || email),
+    forgot: t.auth.forgotSubtitle,
+    reset: t.auth.resetSubtitle,
   };
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col bg-sand/95 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex flex-col bg-white"
       role="dialog"
       aria-modal="true"
       aria-labelledby="auth-title"
     >
-      <div className="flex-1 overflow-y-auto px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-8">
+      <div className="flex-1 overflow-y-auto px-5 pt-[max(2.5rem,env(safe-area-inset-top))] pb-10">
         <div className="mx-auto w-full max-w-sm">
-          <p className="text-center text-xs font-medium uppercase tracking-wide text-steppe-mid">
-            EcoSteppe
-          </p>
+          {/* Header with language switcher */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold tracking-widest text-steppe-deep/40 uppercase">
+              EcoSteppe
+            </p>
+            <div className="flex rounded-lg border border-sand-dark overflow-hidden">
+              {LOCALE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setLocale(opt.value)}
+                  className={`px-2.5 py-1 text-xs font-semibold transition-colors ${
+                    locale === opt.value
+                      ? "bg-steppe-deep text-white"
+                      : "bg-white text-steppe-deep/50 hover:text-steppe-deep"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <h1
             id="auth-title"
-            className="mt-2 text-center text-2xl font-semibold text-steppe-deep"
+            className="mt-8 text-2xl font-bold tracking-tight text-steppe-deep"
           >
             {titles[authView]}
           </h1>
-          <p className="mt-1 text-center text-sm text-steppe-deep/55">
-            {authView === "login" && "Войдите, чтобы сохранять заявки и прогресс батыра"}
-            {authView === "register" && "Создайте аккаунт батыра"}
-            {authView === "verify" && `Код отправлен на ${pendingEmail || email}`}
-            {authView === "forgot" && "Введите email — пришлём код для сброса"}
-            {authView === "reset" && "Введите код и новый пароль"}
+          <p className="mt-1.5 text-sm text-steppe-deep/50">
+            {subtitles[authView]}
           </p>
 
           {error ? (
-            <p className="mt-4 rounded-xl bg-red-50 px-3 py-2.5 text-sm text-red-700">
+            <div className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
-            </p>
+            </div>
           ) : null}
           {info && !error ? (
-            <p className="mt-4 rounded-xl bg-sky/60 px-3 py-2.5 text-sm text-steppe-deep">
+            <div className="mt-5 rounded-xl bg-steppe-light/15 px-4 py-3 text-sm text-steppe-deep">
               {info}
-            </p>
+            </div>
           ) : null}
 
           {(authView === "login" || authView === "register") && (
@@ -434,26 +417,26 @@ export function AuthScreen() {
               type="button"
               onClick={() => void handleGoogle()}
               disabled={busy}
-              className={`${btnSecondary} mt-6`}
+              className="mt-6 flex min-h-12 w-full items-center justify-center gap-2.5 rounded-xl border border-sand-dark bg-white px-4 text-sm font-medium text-steppe-deep transition active:scale-[0.98] disabled:opacity-50"
             >
               <GoogleIcon />
-              Продолжить с Google
+              {t.auth.googleBtn}
             </button>
           )}
 
           {(authView === "login" || authView === "register") && (
             <div className="my-5 flex items-center gap-3">
               <span className="h-px flex-1 bg-sand-dark" />
-              <span className="text-xs text-steppe-deep/45">или email</span>
+              <span className="text-xs text-steppe-deep/40">{t.auth.orEmail}</span>
               <span className="h-px flex-1 bg-sand-dark" />
             </div>
           )}
 
           {authView === "login" && (
-            <form onSubmit={(e) => void handleLogin(e)} className="space-y-4">
+            <form onSubmit={(e) => void handleLogin(e)} className="space-y-3">
               <AuthField
                 id="login-email"
-                label="Email"
+                label={t.auth.email}
                 type="email"
                 value={email}
                 onChange={setEmail}
@@ -462,30 +445,30 @@ export function AuthScreen() {
               />
               <AuthField
                 id="login-password"
-                label="Пароль"
+                label={t.auth.password}
                 type="password"
                 value={password}
                 onChange={setPassword}
                 autoComplete="current-password"
               />
               <button type="submit" disabled={busy} className={btnPrimary}>
-                Войти
+                {t.auth.loginBtn}
               </button>
               <button
                 type="button"
                 onClick={() => switchView("forgot")}
                 className="w-full text-center text-sm text-steppe-mid underline-offset-2 hover:underline"
               >
-                Забыли пароль?
+                {t.auth.forgotPassword}
               </button>
             </form>
           )}
 
           {authView === "register" && (
-            <form onSubmit={(e) => void handleRegister(e)} className="space-y-4">
+            <form onSubmit={(e) => void handleRegister(e)} className="space-y-3">
               <AuthField
                 id="reg-email"
-                label="Email"
+                label={t.auth.email}
                 type="email"
                 value={email}
                 onChange={setEmail}
@@ -493,34 +476,34 @@ export function AuthScreen() {
               />
               <AuthField
                 id="reg-password"
-                label="Пароль"
+                label={t.auth.password}
                 type="password"
                 value={password}
                 onChange={setPassword}
                 autoComplete="new-password"
               />
-              <p className="-mt-2 text-xs text-steppe-deep/50">
-                Минимум 8 символов, буква и цифра
+              <p className="-mt-1 text-xs text-steppe-deep/45">
+                {t.auth.passwordHint}
               </p>
               <AuthField
                 id="reg-confirm"
-                label="Подтверждение пароля"
+                label={t.auth.confirmPassword}
                 type="password"
                 value={confirmPassword}
                 onChange={setConfirmPassword}
                 autoComplete="new-password"
               />
               <button type="submit" disabled={busy} className={btnPrimary}>
-                Зарегистрироваться
+                {t.auth.registerBtn}
               </button>
             </form>
           )}
 
           {authView === "verify" && (
-            <form onSubmit={(e) => void handleVerify(e)} className="space-y-4">
+            <form onSubmit={(e) => void handleVerify(e)} className="space-y-3">
               <AuthField
                 id="verify-otp"
-                label="Код из письма"
+                label={t.auth.codeFromEmail}
                 value={otp}
                 onChange={setOtp}
                 inputMode="numeric"
@@ -529,37 +512,36 @@ export function AuthScreen() {
                 autoComplete="one-time-code"
               />
               <button type="submit" disabled={busy} className={btnPrimary}>
-                Подтвердить
+                {t.auth.confirmBtn}
               </button>
               <button
                 type="button"
                 onClick={() => void handleResendCode()}
                 disabled={busy || resendCooldown > 0}
-                className="w-full min-h-11 text-center text-sm text-steppe-mid disabled:text-steppe-deep/35"
+                className="w-full min-h-11 text-center text-sm text-steppe-mid disabled:text-steppe-deep/30"
               >
                 {resendCooldown > 0
-                  ? `Отправить снова через ${resendCooldown} с`
-                  : "Отправить код снова"}
+                  ? t.auth.resendCooldown(resendCooldown)
+                  : t.auth.resendCode}
               </button>
-              <p className="text-center text-xs text-steppe-deep/45">
-                Между письмами Supabase просит подождать ~1 мин. Используйте
-                последний пришедший код.
+              <p className="text-center text-xs text-steppe-deep/40">
+                {t.auth.supabaseHint}
               </p>
             </form>
           )}
 
           {authView === "forgot" && (
-            <form onSubmit={(e) => void handleForgot(e)} className="space-y-4">
+            <form onSubmit={(e) => void handleForgot(e)} className="space-y-3">
               <AuthField
                 id="forgot-email"
-                label="Email"
+                label={t.auth.email}
                 type="email"
                 value={email}
                 onChange={setEmail}
                 autoComplete="email"
               />
               <button type="submit" disabled={busy} className={btnPrimary}>
-                Отправить код
+                {t.auth.sendCode}
               </button>
             </form>
           )}
@@ -567,11 +549,11 @@ export function AuthScreen() {
           {authView === "reset" && (
             <form
               onSubmit={(e) => void handleResetPassword(e)}
-              className="space-y-4"
+              className="space-y-3"
             >
               <AuthField
                 id="reset-otp"
-                label="Код из письма"
+                label={t.auth.codeFromEmail}
                 value={otp}
                 onChange={setOtp}
                 inputMode="numeric"
@@ -581,7 +563,7 @@ export function AuthScreen() {
               />
               <AuthField
                 id="reset-password"
-                label="Новый пароль"
+                label={t.auth.newPassword}
                 type="password"
                 value={newPassword}
                 onChange={setNewPassword}
@@ -589,40 +571,40 @@ export function AuthScreen() {
               />
               <AuthField
                 id="reset-confirm"
-                label="Подтверждение пароля"
+                label={t.auth.confirmPassword}
                 type="password"
                 value={confirmNewPassword}
                 onChange={setConfirmNewPassword}
                 autoComplete="new-password"
               />
               <button type="submit" disabled={busy} className={btnPrimary}>
-                Сохранить пароль
+                {t.auth.savePassword}
               </button>
             </form>
           )}
 
-          <div className="mt-6 text-center text-sm text-steppe-deep/60">
+          <div className="mt-7 text-center text-sm text-steppe-deep/50">
             {authView === "login" && (
               <>
-                Нет аккаунта?{" "}
+                {t.auth.noAccount}{" "}
                 <button
                   type="button"
                   onClick={() => switchView("register")}
-                  className="font-medium text-steppe-mid underline-offset-2 hover:underline"
+                  className="font-semibold text-steppe-deep underline-offset-2 hover:underline"
                 >
-                  Зарегистрироваться
+                  {t.auth.registerBtn}
                 </button>
               </>
             )}
             {authView === "register" && (
               <>
-                Уже есть аккаунт?{" "}
+                {t.auth.hasAccount}{" "}
                 <button
                   type="button"
                   onClick={() => switchView("login")}
-                  className="font-medium text-steppe-mid underline-offset-2 hover:underline"
+                  className="font-semibold text-steppe-deep underline-offset-2 hover:underline"
                 >
-                  Войти
+                  {t.auth.loginBtn}
                 </button>
               </>
             )}
@@ -632,9 +614,9 @@ export function AuthScreen() {
               <button
                 type="button"
                 onClick={() => switchView("login")}
-                className="font-medium text-steppe-mid underline-offset-2 hover:underline"
+                className="font-semibold text-steppe-mid underline-offset-2 hover:underline"
               >
-                ← Назад ко входу
+                {t.auth.backToLogin}
               </button>
             )}
           </div>
@@ -643,6 +625,9 @@ export function AuthScreen() {
     </div>
   );
 }
+
+const btnPrimary =
+  "flex min-h-12 w-full items-center justify-center rounded-xl bg-steppe-deep px-4 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-50";
 
 function GoogleIcon() {
   return (

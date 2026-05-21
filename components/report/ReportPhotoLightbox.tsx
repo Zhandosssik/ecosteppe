@@ -5,18 +5,20 @@ import Image from "next/image";
 type ReportPhotoLightboxProps = {
   photoUrl: string;
   onClose: () => void;
+  label?: string;
 };
 
 export function ReportPhotoLightbox({
   photoUrl,
   onClose,
+  label = "Фото зоны",
 }: ReportPhotoLightboxProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col bg-black/95"
       role="dialog"
       aria-modal
-      aria-label="Фото зоны загрязнения"
+      aria-label={label}
     >
       <div className="flex shrink-0 items-center justify-end px-4 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <button
@@ -37,7 +39,7 @@ export function ReportPhotoLightbox({
       >
         <Image
           src={photoUrl}
-          alt="Фото зоны загрязнения"
+          alt={label}
           fill
           className="object-contain"
           sizes="100vw"

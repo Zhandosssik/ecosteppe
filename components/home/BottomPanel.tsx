@@ -14,21 +14,24 @@ import {
   type PanelMode,
   type PanelSnap,
 } from "@/lib/layout/panel-snaps";
+import { useLanguage } from "@/lib/i18n/context";
 import type { RouteBuildState } from "@/types/map-route";
-import type { NearbyReport } from "@/types/report";
+import type { ReportListItem } from "@/types/report";
 
 type BottomPanelProps = {
   panelSnap: PanelSnap;
   panelMode: PanelMode;
   nearbyState: NearbyState;
-  selectedReport: NearbyReport | null;
+  selectedReport: ReportListItem | null;
   routeState: RouteBuildState;
   userPosition: [number, number] | null;
   onPanelSnapChange: (snap: PanelSnap) => void;
-  onSelectReport: (report: NearbyReport) => void;
+  onSelectReport: (report: ReportListItem) => void;
   onClearSelectedReport: () => void;
   onBuildRoute: () => void;
   onClearRoute: () => void;
+  onCleanupSubmitted?: () => void;
+  onDismissedNatural?: () => void;
 };
 
 export function BottomPanel({
@@ -43,7 +46,10 @@ export function BottomPanel({
   userPosition,
   onBuildRoute,
   onClearRoute,
+  onCleanupSubmitted,
+  onDismissedNatural,
 }: BottomPanelProps) {
+  const { t } = useLanguage();
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
   const dragging = useRef(false);
@@ -72,27 +78,19 @@ export function BottomPanel({
 
   const handlePointerMove = (e: PointerEvent<HTMLDivElement>) => {
     if (!dragging.current) return;
-
     const delta = e.clientY - dragStartY.current;
     const minH = snapHeightsPx.peek;
     const maxH = snapHeightsPx.full;
-    const next = Math.round(
-      Math.min(maxH, Math.max(minH, dragStartHeight.current - delta)),
-    );
+    const next = Math.round(Math.min(maxH, Math.max(minH, dragStartHeight.current - delta)));
     setDragHeightPx(next);
   };
 
   const handlePointerUp = (e: PointerEvent<HTMLDivElement>) => {
     if (!dragging.current) return;
-
     const delta = e.clientY - dragStartY.current;
     const finalHeight = Math.round(
-      Math.min(
-        snapHeightsPx.full,
-        Math.max(snapHeightsPx.peek, dragStartHeight.current - delta),
-      ),
+      Math.min(snapHeightsPx.full, Math.max(snapHeightsPx.peek, dragStartHeight.current - delta)),
     );
-
     resetDrag();
     void delta;
     onPanelSnapChange(snapFromHeight(finalHeight, panelMode));
@@ -103,18 +101,18 @@ export function BottomPanel({
 
   const handleHint =
     panelSnap === "peek"
-      ? "Потяните вверх — открыть панель"
+      ? t.home.pullUpOpen
       : panelSnap === "full"
-        ? "Потяните вниз — карта или меньше"
+        ? t.home.pullDownClose
         : isDetailView
-          ? "Потяните вверх — на весь экран · вниз — карта или список"
-          : "Потяните вверх — на весь экран · вниз — карта";
+          ? t.home.pullUpFull
+          : t.home.pullUpFullList;
 
   const chevronRotated = panelSnap === "peek";
 
   return (
     <section
-      className={`absolute inset-x-0 z-20 flex flex-col overflow-hidden rounded-t-3xl bg-sand shadow-[0_-8px_32px_rgba(27,67,50,0.08)] ring-1 ring-sand-dark/60 ease-out ${
+      className={`absolute inset-x-0 z-20 flex flex-col overflow-hidden rounded-t-[1.75rem] bg-white shadow-[0_-6px_24px_rgba(27,67,50,0.07)] ring-1 ring-sand-dark/50 ease-out ${
         dragActive ? "transition-none" : "transition-[height] duration-300"
       }`}
       style={{
@@ -126,8 +124,8 @@ export function BottomPanel({
         <button
           type="button"
           onClick={onClearSelectedReport}
-          aria-label="Закрыть"
-          className="absolute top-3 right-4 z-30 flex h-9 w-9 items-center justify-center rounded-xl bg-white text-steppe-deep/55 ring-1 ring-steppe-deep/10 shadow-sm transition active:scale-95"
+          aria-label={t.common.close}
+          className="absolute top-3 right-4 z-30 flex h-9 w-9 items-center justify-center rounded-xl bg-sand text-steppe-deep/50 transition active:scale-95"
         >
           <CloseIcon className="h-4 w-4" />
         </button>
@@ -140,19 +138,19 @@ export function BottomPanel({
         onPointerUp={handlePointerUp}
         onPointerCancel={resetDrag}
         aria-hidden
-        className={`flex w-full shrink-0 touch-none flex-col items-center pt-2 pb-1 select-none ${
+        className={`flex w-full shrink-0 touch-none flex-col items-center pt-2.5 pb-1 select-none ${
           dragActive ? "cursor-grabbing" : "cursor-grab"
         }`}
       >
-        <span className="h-1 w-10 rounded-full bg-sand-dark/80" />
+        <span className="h-1 w-9 rounded-full bg-steppe-deep/15" />
         <span
-          className={`mt-1 flex h-8 w-8 items-center justify-center rounded-full text-steppe-deep/50 ${
+          className={`mt-1 flex h-7 w-7 items-center justify-center text-steppe-deep/40 ${
             chevronRotated ? "" : "rotate-180"
           } ${dragActive ? "" : "transition-transform duration-300"}`}
         >
-          <ChevronDownIcon className="h-5 w-5" />
+          <ChevronDownIcon className="h-4 w-4" />
         </span>
-        <span className="px-4 text-center text-[10px] font-medium text-steppe-deep/45">
+        <span className="px-4 text-center text-[10px] text-steppe-deep/35">
           {handleHint}
         </span>
       </div>
@@ -165,22 +163,27 @@ export function BottomPanel({
           userPosition={userPosition}
           onBuildRoute={onBuildRoute}
           onClearRoute={onClearRoute}
+          onCleanupSubmitted={onCleanupSubmitted}
+          onDismissedNatural={onDismissedNatural}
+          isCompleted={Boolean(selectedReport.cleaned_at)}
         />
       ) : (
         <>
-          <header className="shrink-0 px-5 pt-1 pb-2">
+          <header className="shrink-0 px-5 pt-1 pb-3">
             <div className="flex items-baseline justify-between gap-2">
               <h2 className="text-base font-semibold text-steppe-deep">
-                Ближайшие зоны
+                {t.home.nearbyZones}
               </h2>
               {reportCount !== null && (
-                <span className="text-xs font-medium text-steppe-deep/45">
-                  {reportCount === 0 ? "нет заявок" : `${reportCount} шт.`}
+                <span className="text-xs font-medium text-steppe-deep/40">
+                  {reportCount === 0
+                    ? t.home.noReports
+                    : t.home.reportsCount(reportCount)}
                 </span>
               )}
             </div>
-            <p className="mt-0.5 text-xs text-steppe-deep/55">
-              Сортировка по расстоянию от вас — чем ближе, тем выше в списке
+            <p className="mt-0.5 text-xs text-steppe-deep/45">
+              {t.home.sortByDistance}
             </p>
           </header>
 

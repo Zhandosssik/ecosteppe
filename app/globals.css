@@ -7,8 +7,8 @@
   --steppe-deep: #1b4332;
   --steppe-mid: #2d6a4f;
   --steppe-light: #52b788;
-  --sand: #f4efe6;
-  --sand-dark: #e0d4c4;
+  --sand: #f5f0e8;
+  --sand-dark: #e2d6c6;
   --sky: #d8ead3;
 }
 
@@ -34,11 +34,13 @@ body {
   color: var(--steppe-deep);
 }
 
+/* Leaflet map */
 .leaflet-container {
   font-family: inherit;
-  background: #e8efe6;
+  background: #eaefe8;
 }
 
+/* User location marker */
 .user-location-marker {
   position: relative;
   display: block;
@@ -51,7 +53,7 @@ body {
   inset: 0;
   border-radius: 9999px;
   background: var(--steppe-light);
-  opacity: 0.45;
+  opacity: 0.4;
   animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
 }
 
@@ -61,48 +63,49 @@ body {
   border-radius: 9999px;
   border: 2px solid #fff;
   background: var(--steppe-mid);
-  box-shadow: 0 1px 4px rgba(27, 67, 50, 0.35);
+  box-shadow: 0 1px 4px rgba(27, 67, 50, 0.3);
 }
 
+/* Trash zone markers */
 .trash-zone-marker {
   display: block;
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 9999px;
   border: 2px solid #fff;
   background: #9ca3af;
-  box-shadow: 0 1px 6px rgba(75, 85, 99, 0.35);
+  box-shadow: 0 1px 6px rgba(75, 85, 99, 0.3);
 }
 
-/* Близость: 0 — рядом (красный) → 3 — далеко (серый) */
 .trash-zone-marker--tier-0 {
   background: #dc2626;
-  box-shadow: 0 1px 8px rgba(220, 38, 38, 0.55);
+  box-shadow: 0 1px 8px rgba(220, 38, 38, 0.5);
 }
 
 .trash-zone-marker--tier-1 {
   background: #ea580c;
-  box-shadow: 0 1px 7px rgba(234, 88, 12, 0.5);
+  box-shadow: 0 1px 7px rgba(234, 88, 12, 0.45);
 }
 
 .trash-zone-marker--tier-2 {
   background: #f59e0b;
-  box-shadow: 0 1px 6px rgba(245, 158, 11, 0.45);
+  box-shadow: 0 1px 6px rgba(245, 158, 11, 0.4);
 }
 
 .trash-zone-marker--tier-3 {
   background: #9ca3af;
-  box-shadow: 0 1px 6px rgba(107, 114, 128, 0.35);
+  box-shadow: 0 1px 6px rgba(107, 114, 128, 0.3);
 }
 
+/* Pick location marker */
 .pick-location-marker {
   display: block;
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border-radius: 9999px;
   border: 3px solid #fff;
   background: var(--steppe-mid);
-  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.4);
+  box-shadow: 0 2px 8px rgba(27, 67, 50, 0.35);
 }
 
 @keyframes ping {

@@ -30,7 +30,8 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  // getSession — без лишнего сетевого запроса на каждую навигацию (быстрее getUser)
+  await supabase.auth.getSession();
 
   return response;
 }

@@ -212,7 +212,10 @@ export function LeafletMap({
     setGeoLoading(true);
     onGeoErrorRef.current?.(null);
 
-    const result = await getUserPosition();
+    const result = await getUserPosition({
+      highAccuracy: fly,
+      maximumAge: fly ? 15_000 : 90_000,
+    });
     setGeoLoading(false);
 
     if (!result.ok) {
