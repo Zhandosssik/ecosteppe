@@ -45,7 +45,7 @@ export async function computeProfileStats(
 ): Promise<ProfileStats> {
   const { data: reports, error } = await authClient
     .from("reports")
-    .select("id, status, ai_verified")
+    .select("id, status, ai_verified, notes")
     .eq("user_id", userId);
 
   if (error) {
